@@ -36,30 +36,24 @@ class Yard extends Component {
   }
 
   componentDidMount () {
-    setInterval(this.tick.bind(this), this.props.msPerTick);
+    this.interval = setInterval(this.tick.bind(this), this.props.msPerTick);
+  }
+
+  componentWillUnmount () {
+    clearInterval(this.interval);
   }
 
   tick () {
     let chickens = this.state.chickens.map(chicken => {
       let clone = {};
       Object.assign(clone, chicken);
-      if (clone.frame < 3) {
-        clone.frame = clone.frame + 1;
-      } else {
+      clone.frame = clone.frame + 1;
+      if (clone.frame > 3) {
         clone.frame = 0;
       }
       return clone;
     });
     this.setState({chickens: chickens});
-    /*
-    this.state.chickens.forEach(chicken => {
-      if (chicken.frame < 4) {
-        chicken.frame = chicken.frame + 1;
-      } else {
-        chicken.frame = 0;
-      }
-    });
-    */
   }
 
   getStyle() {
