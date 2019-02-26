@@ -12,6 +12,8 @@ class Chicken extends Component {
       backgroundPosition: (-this.props.frame * 100) + "% 0%",
       imageRendering: 'pixelated',
       position: 'absolute',
+      //transform: `scaleX(${this.props.facing})`,
+      transform: `scaleX(${this.props.facing})`,
       top: this.props.y || 0,
       left: this.props.x || 0,
       width: '32px',
