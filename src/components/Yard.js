@@ -7,7 +7,6 @@ class Yard extends Component {
     super(props);
 
     let bushes = [];
-    let chickens = [];
     let i;
 
     for (i = 0; i < this.props.width; i += 32) {
@@ -19,97 +18,55 @@ class Yard extends Component {
       bushes.push({x: this.props.width - 32, y: i});
     }
 
-    for (i = 0; i < this.props.numChickens; i++) {
-      let chicken = {
-        x: 32 + Math.floor(Math.random() * (this.props.width - 96)),
-        y: 32 + Math.floor(Math.random() * (this.props.height - 96)),
-        frame: 0,
-        pose: "stand",
-        direction: 0,
-        timeUntilChange: Math.random() * 5000,
-        speed: 4,
-        isMounted: false,
-        facing: Math.random() > .5 ? 1 : -1
-      };
-      chickens.push(chicken);
-    }
-
     this.state = {
-      bushes: bushes,
-      chickens: chickens
+      bushes: bushes
     };
 
     this.msPerTick = this.props.msPerTick;
-    this.offsetLeft = 0;
-    this.offsetTop = 0;
+    this.actors = [];
   }
 
   componentDidMount () {
-    this.interval = setInterval(() => this.tick(this.msPerTick), this.msPerTick);
-    this.ref = React.createRef();
+    this.props.registerResize(this);
   }
 
-  componentWillUnmount () {
-    clearInterval(this.interval);
-  }
-
-  tick (elapsedTime) {
-    let chickens = this.state.chickens.map(chicken => {
-      let clone = {};
-      Object.assign(clone, chicken);
-      clone.timeUntilChange -= elapsedTime;
-      if (clone.timeUntilChange <= 0) {
-        clone.timeUntilChange = Math.random() * 5000;
-        switch (clone.pose) {
-          case "stand":
-            clone.pose = "walk";
-            clone.direction = Math.random() * Math.PI * 2;
-            clone.speed = (Math.random() * 9) + 1;
-            break;
-          case "walk":
-            clone.pose = "stand";
-            clone.frame = 0;
-            break;
-        }
-      }
-      if (clone.pose == "walk") {
-        let xAmount = Math.cos(clone.direction) * clone.speed;
-        let yAmount = Math.sin(clone.direction) * clone.speed;
-        if (clone.x + xAmount < 32 || clone.x + xAmount > this.props.width - 64) {
-          //clone.direction = Math.atan(yAmount / -xAmount);
-          clone.direction = Math.atan2(yAmount, -xAmount);
-          xAmount = Math.cos(clone.direction) * clone.speed;
-        }
-        if (clone.y + yAmount < 32 || clone.y + yAmount > this.props.height - 64) {
-          //clone.direction = Math.atan(-yAmount / xAmount);
-          clone.direction = Math.atan2(-yAmount, xAmount);
-          yAmount = Math.sin(clone.direction) * clone.speed;
-        }
-        if (xAmount > 0) {
-          clone.facing = -1;
-        } else {
-          clone.facing = 1;
-        }
-        clone.x += xAmount;
-        clone.y += yAmount;
-        clone.frame = clone.frame + 1;
-        if (clone.frame > 3) {
-          clone.frame = 0;
-        }
-      }
-      return clone;
+  hotfix () {
+    this.setRef(this.ref, true);
+    this.actors.forEach(actor => {
+      actor.forceUpdate();
     });
-    this.setState({chickens: chickens});
-    if (this.props.msPerTick != this.msPerTick) {
-      clearInterval(this.interval);
-      this.msPerTick = this.props.msPerTick;
-      this.interval = setInterval(() => this.tick(this.msPerTick), this.msPerTick);
+  }
+
+  move (actor) {
+    let direction = actor.state.direction;
+    let xAmount = Math.cos(direction) * actor.state.speed;
+    let yAmount = Math.sin(direction) * actor.state.speed;
+    let hitSolid = false;
+    // this has them turn around BEFORE hitting the wall. it should
+    //   really calculate how much farther they would have moved to
+    //   actually hit the edge, then use their remaining movement to
+    //   push them away again.
+
+    // Also it'd be really cool if I add collisions to the bushes rather
+    //   than the edges. Then I can make random yard layouts, too.
+
+    if (actor.state.x + xAmount < 32 || actor.state.x + xAmount > this.props.width - 64) {
+      direction = Math.atan2(yAmount, -xAmount);
+      xAmount = Math.cos(direction) * actor.state.speed;
+      hitSolid = true;
     }
-    if (this.element) {
-      this.offsetLeft = this.element.offsetLeft;
-      this.offsetTop = this.element.offsetTop;
-      this.setState({isMounted: true});
+    if (actor.state.y + yAmount < 32 || actor.state.y + yAmount > this.props.height - 64) {
+      direction = Math.atan2(-yAmount, xAmount);
+      yAmount = Math.sin(direction) * actor.state.speed;
+      hitSolid = true;
     }
+    actor.setState({
+      direction: direction,
+      facing: xAmount > 0 ? -1 : 1,
+      x: actor.state.x + xAmount,
+      y: actor.state.y + yAmount
+    });
+    return hitSolid;
   }
 
   getStyle() {
@@ -120,36 +77,78 @@ class Yard extends Component {
       backgroundColor: "lightgreen",
       backgroundSize: "cover",
       padding: 0,
-      margin: 0
+      margin: 0,
+      lineHeight: this.props.height + "px"
     }
   }
 
-  render() {
-    if (!this.state.isMounted) return (<div className="yard" ref={obj => this.element = obj}>Loading...</div>);
-    //console.log(this.ref);
+  setRef (ref, force=false) {
+    if (force || (ref && ref.offsetLeft !== this.state.offsetLeft && ref.offsetTop !== this.state.offsetTop)) {
+      this.ref = ref;
+      this.setState({offsetLeft: ref.offsetLeft, offsetTop: ref.offsetTop});
+    }
+  }
+
+  registerActor (actor) {
+    this.actors.push(actor);
+  }
+
+  renderChildren (x, y) {
+    if (x && y) {
+      let children = [];
+      for (var i = 0; i < this.props.numChickens; i++) {
+        children.push(
+          <Chicken
+            x={32 + Math.floor(Math.random() * (this.props.width - 96))}
+            y={32 + Math.floor(Math.random() * (this.props.height - 96))}
+            left={x}
+            top={y}
+            move={this.move.bind(this)}
+            msPerTick={this.props.msPerTick}
+            key={children.length}
+            registerActor={this.registerActor.bind(this)}
+          />
+        );
+      }
+      children.push(...this.state.bushes.map((bush, index) => {
+        return (
+          <Bush
+            x={bush.x}
+            y={bush.y}
+            key={children.length + index}
+            left={x}
+            top={y}
+            registerActor={this.registerActor.bind(this)}
+          />
+        )
+      }));
+      return children;
+    } else {
+      return (
+        <div>Loading...</div>
+      );
+    }
+  }
+
+  render () {
     return (
-      <div className="yard" style={this.getStyle()} ref={obj => this.element = obj}>
-        {
-          this.state.bushes.map((bush, index) => {
-            return (
-              <Bush x={bush.x + this.offsetLeft} y={bush.y + this.offsetTop} key={index} />
-            )
-          })
+      <div
+        className="yard"
+        style={
+          {
+            alignSelf: "center",
+            width: this.props.width,
+            height: this.props.height,
+            backgroundColor: "lightgreen",
+            backgroundSize: "cover",
+            padding: 0,
+            margin: 0,
+            lineHeight: this.props.height + "px"
+          }
         }
-        {
-          this.state.chickens.map((chicken, index) => {
-            return (
-              <Chicken
-                x={chicken.x + this.offsetLeft}
-                y={chicken.y + this.offsetTop}
-                frame={chicken.frame}
-                pose={chicken.pose}
-                facing={chicken.facing}
-                key={index}
-              />
-            )
-          })
-        }
+        ref={obj => this.setRef(obj)}
+      >
+        {this.renderChildren(this.state.offsetLeft, this.state.offsetTop)}
       </div>
     );
   }

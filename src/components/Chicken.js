@@ -1,31 +1,59 @@
 import React, { Component } from 'react';
-import animation from './../animations/chicken';
-
+import Actor from './Actor';
 class Chicken extends Component {
-  getFrame () {
-    return animation[this.props.pose].frames[this.props.frame];
+  constructor (props) {
+    super(props);
+    this.timeUntilChange = Math.random() * 5000;
   }
 
-  getStyle () {
-    return {
-      background: 'url("/assets/images/cluck.png")',
-      backgroundPosition: (-this.props.frame * 100) + "% 0%",
-      imageRendering: 'pixelated',
-      position: 'absolute',
-      //transform: `scaleX(${this.props.facing})`,
-      transform: `scaleX(${this.props.facing})`,
-      top: this.props.y || 0,
-      left: this.props.x || 0,
-      width: '32px',
-      height: '32px',
-      backgroundSize: `500% ${100}%, cover`
+  tick (elapsedTime) {
+    this.timeUntilChange -= elapsedTime;
+    if (this.timeUntilChange <= 0) {
+      this.timeUntilChange = Math.random() * 5000;
+      switch (this.actor.state.pose) {
+        case "stand":
+        default:
+          this.actor.setState({
+            pose: "walk",
+            direction: Math.random() * Math.PI * 2,
+            speed: (Math.random() * 9) + 1
+          });
+          break;
+        case "walk":
+          this.actor.setState({pose: "stand", frame: 0});
+          break;
+      }
     }
+    if (this.actor.state.pose === "walk") {
+      this.props.move(this.actor);
+      let frame = this.actor.state.frame + 1;
+      if (frame > 3) {
+        frame = 0;
+      }
+      this.actor.setState({frame});
+    }
+  }
+
+  registerActor (actor) {
+    this.props.registerActor(actor);
+    this.actor = actor;
   }
 
   render () {
     return (
-      <div className="chicken" style={this.getStyle()}>
-      </div>
+      <Actor
+        className="chicken"
+        imageName="cluck"
+        x={this.props.x}
+        y={this.props.y}
+        left={this.props.left}
+        top={this.props.top}
+        imageCols="5"
+        msPerTick={this.props.msPerTick}
+        pose="stand"
+        tick={this.tick.bind(this)}
+        registerActor={this.registerActor.bind(this)}
+      />
     );
   }
 }

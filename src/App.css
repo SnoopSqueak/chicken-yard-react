@@ -1,8 +1,8 @@
 .App {
-  text-align: center;
-  justify-content: center;
-  display: flex;
   height: 100vh;
+  text-align: center;
+  display: block;
+  justify-content: center;
 }
 
 .App-logo {
@@ -38,4 +38,11 @@
 .controls {
   align-self: center;
   width: 25%;
+}
+
+.flexrow {
+  display: flex;
+  justify-content: center;
+  padding: 16px;
+  width: 100%;
 }
