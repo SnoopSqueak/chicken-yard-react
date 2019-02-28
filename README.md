@@ -9,7 +9,11 @@ I recommend going through each file from top to bottom in this order:
 4. Actor.js
 5. Bush.js
 
-...but you might find it useful to jump around. Happy coding!
+...but you might find it useful to jump around.
+
+Also, I don't suggest running `npm start` on this branch. I wanted the comments to be right above the relevant section of code, so I added JavaScript comments directly into JSX, which doesn't really work. Many of the comments are treated as text and displayed in the DOM. Switch to the master branch if you want to try the app.
+
+Happy coding!
 
 ## Installation
 
@@ -20,6 +24,8 @@ Clone the project and run `npm install` in the project directory.
 In the project directory, you can run:
 
 ### `npm start`
+
+*You should really switch to the master branch before doing this.*
 
 Runs the app in the development mode.<br>
 Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
