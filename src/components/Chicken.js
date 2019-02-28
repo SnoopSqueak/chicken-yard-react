@@ -139,7 +139,6 @@ class Chicken extends Component {
         //   math yet, since none of the images in this project require it.
         imageCols="5"
         msPerTick={this.props.msPerTick}
-        // Again, I'm pretty sure `pose` is no longer necessary.
         pose="stand"
         tick={this.tick.bind(this)}
         registerActor={this.registerActor.bind(this)}
