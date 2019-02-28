@@ -1,5 +1,16 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+# Guide to Reading My Comments
+
+I recommend going through each file from top to bottom in this order:
+1. App.js
+2. Yard.js
+3. Chicken.js
+4. Actor.js
+5. Bush.js
+
+...but you might find it useful to jump around. Happy coding!
+
 ## Installation
 
 Clone the project and run `npm install` in the project directory.
